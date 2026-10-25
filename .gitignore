@@ -10,4 +10,4 @@ __pycache__/
 .venv/
 ui/test-results/
 .claude/
-recordings/
+demo/.banner.html
