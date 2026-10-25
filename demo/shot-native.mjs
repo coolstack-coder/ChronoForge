@@ -1,0 +1,10 @@
+import { chromium } from "playwright";
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+p.on("pageerror", (e) => console.log("pageerror:", e.message));
+await p.goto("http://127.0.0.1:7420/?skip");
+await p.locator(".tab", { hasText: "native" }).click();
+await p.waitForSelector(".syscall");
+await p.waitForTimeout(800);
+await p.screenshot({ path: process.argv[2] });
+await b.close();
