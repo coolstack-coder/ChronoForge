@@ -1,0 +1,12 @@
+[package]
+name = "cf-vm"
+description = "Deterministic, fully instrumented VM with record/replay and reverse execution"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+cf-trace.workspace = true
+cf-lang.workspace = true
+serde.workspace = true
+thiserror.workspace = true
