@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: chronoforge-ai
+Version: 0.1.0
+Summary: Optional LLM narrator for ChronoForge root-cause reports
+Requires-Python: >=3.10
+Requires-Dist: anthropic>=0.70
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
