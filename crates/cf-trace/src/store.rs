@@ -232,6 +232,7 @@ mod tests {
                 reads: vec![],
                 writes: vec![],
                 deps: vec![],
+                ctrl: None,
                 sync: None,
                 nondet: None,
                 result: None,

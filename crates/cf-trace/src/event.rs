@@ -132,6 +132,9 @@ pub struct StepEvent {
     pub writes: Vec<Write>,
     /// Dynamic data dependencies: steps whose results this step consumed.
     pub deps: Vec<Step>,
+    /// Dynamic control dependence: the last branch taken in this frame, i.e.
+    /// the decision that made this step run at all.
+    pub ctrl: Option<Step>,
     pub sync: Option<SyncOp>,
     pub nondet: Option<NondetKind>,
     /// Value pushed on the operand stack, if any (handy for "what did this

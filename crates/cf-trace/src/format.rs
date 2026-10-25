@@ -242,6 +242,7 @@ mod tests {
                     new: Val::Int(i as i64 + 1),
                 }],
                 deps: vec![],
+                ctrl: None,
                 sync: None,
                 nondet: None,
                 result: None,

@@ -88,16 +88,19 @@ pub fn instrument(funcs: &[Function]) -> Plan {
 
 fn probe_for(ins: &Instr) -> Probe {
     match ins {
-        Instr::LoadLocal(_) | Instr::StoreLocal(_) => Probe::ACCESS,
+        // Call writes the callee's parameters
+        Instr::LoadLocal(_) | Instr::StoreLocal(_) | Instr::Call { .. } => Probe::ACCESS,
         // heap cells are reachable from any thread holding the array ref
-        Instr::LoadGlobal(_) | Instr::StoreGlobal(_) | Instr::Index | Instr::StoreIndex => {
-            Probe::ACCESS.with(Probe::SHARED)
-        }
+        Instr::LoadGlobal(_)
+        | Instr::StoreGlobal(_)
+        | Instr::Index
+        | Instr::StoreIndex
+        | Instr::MakeArray(_) => Probe::ACCESS.with(Probe::SHARED),
         Instr::Builtin {
             b: Builtin::Push | Builtin::Len,
             ..
         } => Probe::ACCESS.with(Probe::SHARED),
-        Instr::Spawn { .. } => Probe::SYNC,
+        Instr::Spawn { .. } => Probe::SYNC.with(Probe::ACCESS),
         Instr::Builtin { b, .. }
             if matches!(b, Builtin::Lock | Builtin::Unlock | Builtin::Join) =>
         {

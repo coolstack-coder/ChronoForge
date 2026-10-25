@@ -59,6 +59,9 @@ pub struct Frame {
     pub locals: Vec<Val>,
     /// Shadow memory: the step that last wrote each local.
     pub writers: Vec<Option<Step>>,
+    /// Most recent branch executed in this frame (or the call that created
+    /// it) — cheap dynamic control dependence.
+    pub last_branch: Option<Step>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
@@ -183,6 +186,7 @@ impl Machine {
             id: 0,
             locals: vec![Val::Nil; main.nlocals as usize],
             writers: vec![None; main.nlocals as usize],
+            last_branch: None,
         };
         let nglobals = program.globals.len();
         Machine {
@@ -276,12 +280,12 @@ impl Machine {
         self.current = tid;
         self.yielded = false;
 
-        let (func, pc) = {
+        let (func, pc, ctrl) = {
             let f = self.threads[tid as usize]
                 .frames
                 .last()
                 .expect("runnable thread without a frame");
-            (f.func, f.pc)
+            (f.func, f.pc, f.last_branch)
         };
         let program = Arc::clone(&self.program);
         let function = program.func(func);
@@ -303,6 +307,11 @@ impl Machine {
 
         // the thread may have finished (frames popped), so look it up again
         let thread = &mut self.threads[tid as usize];
+        if ins.tag() == OpTag::Branch {
+            if let Some(f) = thread.frames.last_mut() {
+                f.last_branch = Some(step);
+            }
+        }
         match &flow {
             Flow::Next => {
                 if let Some(f) = thread.frames.last_mut() {
@@ -328,6 +337,7 @@ impl Machine {
                 reads: rec.reads,
                 writes: rec.writes,
                 deps: rec.deps,
+                ctrl,
                 sync: rec.sync,
                 nondet: rec.nondet,
                 result: rec.result,
@@ -485,6 +495,21 @@ impl Machine {
             id,
             locals,
             writers,
+            last_branch: Some(self.step),
+        }
+    }
+
+    /// On an out-of-bounds access the array's length matters as much as the
+    /// index, so depend on whoever last grew it.
+    fn length_dep(&self, arr: &Val, rec: &mut Rec) {
+        if let Val::Array(obj) = arr {
+            if let Some(w) = self
+                .heap_writers
+                .get(*obj as usize)
+                .and_then(|w| w.iter().flatten().max())
+            {
+                rec.dep(Some(*w));
+            }
         }
     }
 
@@ -635,7 +660,10 @@ impl Machine {
                 rec.dep(idx.producer);
                 let (obj, i) = match self.array_index(&arr.val, &idx.val) {
                     Ok(x) => x,
-                    Err(f) => return f,
+                    Err(f) => {
+                        self.length_dep(&arr.val, rec);
+                        return f;
+                    }
                 };
                 let val = self.heap[obj as usize][i as usize].clone();
                 rec.read(
@@ -655,7 +683,10 @@ impl Machine {
                 rec.dep(arr.producer);
                 let (obj, i) = match self.array_index(&arr.val, &idx.val) {
                     Ok(x) => x,
-                    Err(f) => return f,
+                    Err(f) => {
+                        self.length_dep(&arr.val, rec);
+                        return f;
+                    }
                 };
                 let old =
                     std::mem::replace(&mut self.heap[obj as usize][i as usize], val.val.clone());
