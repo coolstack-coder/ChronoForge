@@ -1,0 +1,26 @@
+// Dining philosophers. Everyone picks up the left fork, then the right.
+// Works for hours, then the whole table freezes.
+
+let forks = [mutex(), mutex(), mutex()];
+let meals = [0, 0, 0];
+
+fn philosopher(id) {
+    let left = forks[id];
+    let right = forks[(id + 1) % 3];
+    for round in 0..2 {
+        lock(left);
+        yield(); // stare at the spaghetti for a bit
+        lock(right);
+        meals[id] = meals[id] + 1;
+        unlock(right);
+        unlock(left);
+    }
+}
+
+let p0 = spawn philosopher(0);
+let p1 = spawn philosopher(1);
+let p2 = spawn philosopher(2);
+join(p0);
+join(p1);
+join(p2);
+print("meals:", meals);

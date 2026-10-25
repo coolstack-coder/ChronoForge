@@ -1,0 +1,22 @@
+// The boring, correct version: every access to `hits` is under the lock.
+// ChronoForge should find nothing to complain about here.
+
+let hits = 0;
+let guard = mutex();
+
+fn worker(times) {
+    for i in 0..times {
+        lock(guard);
+        hits = hits + 1;
+        unlock(guard);
+    }
+}
+
+let w1 = spawn worker(20);
+let w2 = spawn worker(20);
+let w3 = spawn worker(20);
+join(w1);
+join(w2);
+join(w3);
+assert(hits == 60, "lost increments");
+print("hits:", hits);

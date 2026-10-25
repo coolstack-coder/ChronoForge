@@ -1,0 +1,28 @@
+// Two ATMs hit the same account at the same moment.
+// Passes almost every time. Then one night, money appears out of nowhere.
+
+let balance = 100;
+let paid = 0;
+let ledger = mutex();
+
+fn withdraw(atm, amount) {
+    let seen = balance;
+    if seen >= amount {
+        // read ... decide ... write. someone can sneak in between.
+        balance = seen - amount;
+        lock(ledger);
+        paid = paid + amount;
+        unlock(ledger);
+        print("atm", atm, "dispensed", amount);
+    } else {
+        print("atm", atm, "declined", amount);
+    }
+}
+
+let a = spawn withdraw(1, 80);
+let b = spawn withdraw(2, 50);
+join(a);
+join(b);
+
+print("balance:", balance, "paid out:", paid);
+assert(balance + paid == 100, "money created: balance=" + str(balance) + " paid=" + str(paid));

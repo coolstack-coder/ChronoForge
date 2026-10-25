@@ -1,0 +1,25 @@
+// Single-threaded, no races. Still crashes "randomly" in production.
+// The basket comes from the outside world, so only some baskets break it.
+
+let prices = [12, 7, 30, 5, 18];
+let basket = [];
+let n = 1 + rand(5);
+for i in 0..n {
+    push(basket, rand(len(prices)));
+}
+
+// buy two, get 10% of the next item off
+fn total(items) {
+    let sum = 0;
+    for i in 0..len(items) {
+        let price = prices[items[i]];
+        if i % 2 == 1 {
+            price = price - prices[items[i + 1]] / 10;
+        }
+        sum += price;
+    }
+    return sum;
+}
+
+print("basket:", basket);
+print("total:", total(basket));
