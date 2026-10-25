@@ -1,0 +1,58 @@
+WEBVTT
+
+00:00:00.600 --> 00:00:04.253
+3:07 AM. The ledger service broke once — and every re-run passes.
+
+00:00:04.253 --> 00:00:08.696
+Thread interleavings. clocks. random seeds: the cause changes every time you run it.
+
+00:00:08.696 --> 00:00:12.505
+ChronoForge records the program under a chaos scheduler. hundreds of times.
+
+00:00:12.506 --> 00:00:15.729
+Each run is captured as just its nondeterminism — a few hundred bytes. Red runs broke.
+
+00:00:15.729 --> 00:00:18.698
+Open a failing run. It isn't re-run — it's replayed bit-for-bit from its recording.
+
+00:00:18.698 --> 00:00:22.161
+The verdict: a lost update on balance — 94% confidence. backed by exact steps.
+
+00:00:22.161 --> 00:00:25.265
+Evidence 1 → T2 reads balance = 100 …
+
+00:00:25.265 --> 00:00:28.178
+… 2 → T1 sneaks in and writes 20 …
+
+00:00:28.178 --> 00:00:31.821
+… 3 → T2 writes its stale 50 over it. 80 + 50 paid out of a 100 balance.
+
+00:00:31.821 --> 00:00:35.753
+Step backwards through any instruction — state rebuilt from checkpoints + replay.
+
+00:00:35.753 --> 00:00:39.364
+Plot any variable over time: the trace of balance goes 100 → 20 → 50.
+
+00:00:39.364 --> 00:00:42.757
+“Who wrote this?” — ⟲ reverse-jumps straight to the instruction that produced the value.
+
+00:00:42.757 --> 00:00:50.076
+Set a breakpoint. then reverse-continue to the last time it was hit.
+
+00:00:50.076 --> 00:00:53.716
+Happens-before analysis flags the data race — it would even in runs that passed.
+
+00:00:53.716 --> 00:00:59.900
+Diff against a passing run: where the schedules split. and the first write that differs.
+
+00:00:59.900 --> 00:01:10.210
+Deadlocks: the lock-order graph shows the fork cycle that froze the table.
+
+00:01:10.210 --> 00:01:21.084
+Single-threaded too: the slice walks back from the crash. through the loop. to rand().
+
+00:01:21.084 --> 00:01:29.829
+And real Linux binaries: ptrace records syscalls. patches the vDSO. replays the segfault.
+
+00:01:29.829 --> 00:01:33.946
+ChronoForge — record once. replay forever. rewind anywhere.
