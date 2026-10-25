@@ -71,7 +71,7 @@ export function NativeView() {
             <span>{rec.program.split("/").pop()} · {sum?.emulated} syscalls emulated on replay</span>
           </div>
           <h1 style={{ fontSize: 34 }}>
-            {"Syscall" in ev.kind ? <>{ev.kind.Syscall.name}<em>()</em></> : "Signal" in ev.kind ? <><em>{ev.kind.Signal.name}</em> in {ev.symbol}</> : <>exit</>}
+            {"Syscall" in ev.kind ? <>{ev.kind.Syscall.name}<em>()</em></> : "Signal" in ev.kind ? <><em>{ev.kind.Signal.name}</em> in <span className="mono" style={{ fontSize: 28 }}>{ev.symbol}</span></> : <>exit</>}
           </h1>
           <div className="msg">{ev.symbol ?? "?"} · pc {hex(ev.regs.pc)}</div>
           {"Syscall" in ev.kind && (
@@ -100,7 +100,11 @@ export function NativeView() {
           </div>
           <div className="section" style={{ padding: "14px 0 0" }}>
             <h4>stdout</h4>
-            <pre className="mono" style={{ fontSize: 12, margin: 0 }}>{String.fromCharCode(...rec.stdout.slice(0, 2000))}</pre>
+            {rec.stdout.length ? (
+              <pre className="mono" style={{ fontSize: 12, margin: 0 }}>{String.fromCharCode(...rec.stdout.slice(0, 2000))}</pre>
+            ) : (
+              <div className="muted" style={{ fontSize: 12 }}>nothing — it died on the first request, before printf ever ran</div>
+            )}
           </div>
         </div>
       </div>
