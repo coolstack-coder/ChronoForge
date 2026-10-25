@@ -955,11 +955,15 @@ fn capture(t: &Tracee, image: &Image, index: u64) -> NativeState {
 /// that's how "go back to just before the crash" works natively.
 pub fn replay(rec: &NativeRecording, stop_at: Option<u64>) -> Result<ReplayReport, NativeError> {
     let program = PathBuf::from(&rec.program);
-    let devnull = unsafe { libc::open(c"/dev/null".as_ptr(), libc::O_RDONLY | libc::O_CLOEXEC) };
+    // stdin must be the same *kind* of file as when recording: glibc probes
+    // a char device like /dev/null with an extra isatty() ioctl, which would
+    // be a divergence. Reads are emulated anyway, so an empty pipe will do.
+    let (in_r, in_w) = pipe()?;
+    unsafe { libc::close(in_w) };
     let (out_r, out_w) = pipe()?;
-    let mut t = spawn(&program, &rec.args, devnull, out_w)?;
+    let mut t = spawn(&program, &rec.args, in_r, out_w)?;
     unsafe {
-        libc::close(devnull);
+        libc::close(in_r);
         libc::close(out_w);
     }
     let reader = drain(out_r);
