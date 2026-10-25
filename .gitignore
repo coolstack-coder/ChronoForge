@@ -1,0 +1,11 @@
+target/
+node_modules/
+dist/
+.DS_Store
+*.log
+/recordings/
+/.chronoforge/
+__pycache__/
+*.pyc
+.venv/
+ui/test-results/
