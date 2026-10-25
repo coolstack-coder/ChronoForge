@@ -90,9 +90,30 @@ pub fn write_recording(
     rec: &Recording,
     steps: Option<&[StepEvent]>,
 ) -> Result<u64, TraceError> {
-    let file = File::create(path)?;
+    write_recording_to(BufWriter::new(File::create(path)?), rec, steps)
+}
+
+/// The whole file as bytes — for downloads and size accounting.
+pub fn encode_recording(
+    rec: &Recording,
+    steps: Option<&[StepEvent]>,
+) -> Result<Vec<u8>, TraceError> {
+    let mut buf = io::Cursor::new(Vec::new());
+    write_recording_to(&mut buf, rec, steps)?;
+    Ok(buf.into_inner())
+}
+
+pub fn decode_recording(bytes: &[u8]) -> Result<Recording, TraceError> {
+    TraceReader::from_reader(io::Cursor::new(bytes))?.recording()
+}
+
+pub fn write_recording_to<W: Write + Seek>(
+    out: W,
+    rec: &Recording,
+    steps: Option<&[StepEvent]>,
+) -> Result<u64, TraceError> {
     let mut w = FrameWriter {
-        out: BufWriter::new(file),
+        out,
         index: Vec::new(),
     };
     w.out.write_all(MAGIC)?;
@@ -117,14 +138,19 @@ pub fn write_recording(
     Ok(w.out.stream_position()?)
 }
 
-pub struct TraceReader {
-    file: File,
+pub struct TraceReader<R: Read + Seek = File> {
+    file: R,
     index: Vec<IndexEntry>,
 }
 
-impl TraceReader {
+impl TraceReader<File> {
     pub fn open(path: &Path) -> Result<Self, TraceError> {
-        let mut file = File::open(path)?;
+        Self::from_reader(File::open(path)?)
+    }
+}
+
+impl<R: Read + Seek> TraceReader<R> {
+    pub fn from_reader(mut file: R) -> Result<Self, TraceError> {
         let mut magic = [0u8; 8];
         file.read_exact(&mut magic)?;
         if &magic != MAGIC {
@@ -135,7 +161,7 @@ impl TraceReader {
         file.seek(SeekFrom::End(-16))?;
         let mut tail = [0u8; 16];
         file.read_exact(&mut tail)?;
-        if &tail[8..] != FOOTER {
+        if tail[8..] != FOOTER[..] {
             return Err(TraceError::Corrupt(
                 "truncated recording (no footer)".into(),
             ));
