@@ -59,6 +59,8 @@ pub fn describe(s: &StepEvent, names: &Names) -> String {
     }
     match (&s.op, &s.result) {
         (OpTag::Call, _) => format!("call {}", names.func(s.func)),
+        (OpTag::Assert, None) => format!("assert(…) failed: {}", names.source_line(s.line)),
+        (OpTag::Assert, Some(_)) => "assert(…) held".into(),
         (op, Some(v)) => format!("{op:?} → {v}"),
         (op, None) => format!("{op:?}"),
     }
