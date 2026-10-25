@@ -46,6 +46,21 @@ pub fn describe(s: &StepEvent, names: &Names) -> String {
         let v = s.result.as_ref().map(|v| v.to_string()).unwrap_or_default();
         return format!("{f} → {v}");
     }
+    if let Some(op) = s.sync {
+        use cf_trace::SyncOp::*;
+        let what = match op {
+            Acquire { mutex } => format!("lock({}) acquired", names.mutex(mutex)),
+            Release { mutex } => format!("unlock({})", names.mutex(mutex)),
+            BlockLock { mutex, owner } => {
+                format!("lock({}) blocked — held by T{owner}", names.mutex(mutex))
+            }
+            BlockJoin { target } => format!("join(T{target}) waiting"),
+            Join { target } => format!("join(T{target})"),
+            Spawn { child } => format!("spawn → T{child}"),
+            ThreadExit => "thread exits".into(),
+        };
+        return what;
+    }
     if let Some(w) = s.writes.first() {
         let name = names.loc(w.loc);
         return if w.old == w.new || matches!(s.op, OpTag::Call | OpTag::Spawn | OpTag::Array) {
@@ -61,6 +76,9 @@ pub fn describe(s: &StepEvent, names: &Names) -> String {
         (OpTag::Call, _) => format!("call {}", names.func(s.func)),
         (OpTag::Assert, None) => format!("assert(…) failed: {}", names.source_line(s.line)),
         (OpTag::Assert, Some(_)) => "assert(…) held".into(),
+        (OpTag::Index | OpTag::StoreIndex, None) => {
+            format!("index out of bounds: {}", names.source_line(s.line))
+        }
         (op, Some(v)) => format!("{op:?} → {v}"),
         (op, None) => format!("{op:?}"),
     }

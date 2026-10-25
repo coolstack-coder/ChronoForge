@@ -141,5 +141,8 @@ fn diff_blames_the_scheduler() {
         },
     );
     assert_eq!(d.kind, "schedule", "{d:#?}");
+    // the data divergence should land on the lost update, not the harmless early switch
+    let data = d.data.as_ref().expect("data divergence");
+    assert!(data.name == "balance" || data.name == "paid", "{data:#?}");
     assert!(d.common_prefix > 0);
 }
