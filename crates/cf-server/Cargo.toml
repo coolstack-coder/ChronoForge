@@ -1,4 +1,31 @@
 [package]
 name = "cf-server"
+description = "HTTP + gRPC backend for the ChronoForge UI and tooling"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
+
+[dependencies]
+cf-trace.workspace = true
+cf-lang.workspace = true
+cf-vm.workspace = true
+cf-analysis.workspace = true
+cf-ptrace.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+tokio.workspace = true
+axum.workspace = true
+tower-http.workspace = true
+tonic.workspace = true
+prost.workspace = true
+tracing.workspace = true
+
+[build-dependencies]
+tonic-build.workspace = true
+protox.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"

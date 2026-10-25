@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+// Programmatic access to the engine: record, hunt, seek, stream, analyse.
+// The web UI talks JSON over HTTP; CI bots and IDE plugins can use this.
+package chronoforge.v1;
+
+service ChronoForge {
+  // Record a Forge program once; the session is replayed and analysed server-side.
+  rpc Record(RecordRequest) returns (SessionSummary);
+  // Run many chaos-scheduled recordings, streaming each outcome as it lands.
+  rpc Hunt(HuntRequest) returns (stream HuntRun);
+  // Reverse (or forward) execution: machine state right after `step`.
+  rpc Seek(SeekRequest) returns (MachineState);
+  // The instrumented trace, step by step.
+  rpc StreamSteps(StepRange) returns (stream Step);
+  rpc Analyze(SessionRef) returns (AnalysisReport);
+}
+
+message RecordRequest {
+  string name = 1;
+  string source = 2;
+  uint64 seed = 3;
+  double chaos = 4;
+  repeated string inputs = 5;
+}
+
+message SessionSummary {
+  string id = 1;
+  string name = 2;
+  uint64 total_steps = 3;
+  uint32 threads = 4;
+  // "completed", "fault" or "step_limit"
+  string outcome = 5;
+  string fault_kind = 6;
+  string fault_message = 7;
+  uint32 fault_line = 8;
+  uint64 fault_step = 9;
+  uint64 recording_events = 10;
+  uint64 recording_bytes = 11;
+}
+
+message HuntRequest {
+  string name = 1;
+  string source = 2;
+  uint32 runs = 3;
+  double chaos = 4;
+}
+
+message HuntRun {
+  uint64 seed = 1;
+  bool failed = 2;
+  string signature = 3;
+  uint64 steps = 4;
+}
+
+message SeekRequest {
+  string session_id = 1;
+  uint64 step = 2;
+}
+
+message Variable {
+  string name = 1;
+  string value = 2;
+  string kind = 3;
+  string loc = 4;
+  optional uint64 writer = 5;
+}
+
+message Frame {
+  string func = 1;
+  uint32 line = 2;
+  repeated Variable locals = 3;
+}
+
+message Thread {
+  uint32 tid = 1;
+  string name = 2;
+  string state = 3;
+  repeated Frame frames = 4;
+}
+
+message MachineState {
+  uint64 position = 1;
+  uint32 current = 2;
+  repeated Thread threads = 3;
+  repeated Variable globals = 4;
+  repeated string output = 5;
+}
+
+message StepRange {
+  string session_id = 1;
+  uint64 from = 2;
+  uint64 to = 3;
+}
+
+message Access {
+  string loc = 1;
+  string name = 2;
+  string value = 3;
+}
+
+message Step {
+  uint64 step = 1;
+  uint32 tid = 2;
+  uint32 line = 3;
+  string op = 4;
+  string what = 5;
+  repeated Access reads = 6;
+  repeated Access writes = 7;
+  repeated uint64 deps = 8;
+}
+
+message SessionRef {
+  string session_id = 1;
+}
+
+message Hypothesis {
+  string kind = 1;
+  string title = 2;
+  string explanation = 3;
+  float confidence = 4;
+  repeated uint64 evidence_steps = 5;
+  string fix = 6;
+}
+
+message Race {
+  string name = 1;
+  string kind = 2;
+  uint64 first_step = 3;
+  uint64 second_step = 4;
+  uint32 first_line = 5;
+  uint32 second_line = 6;
+}
+
+message AnalysisReport {
+  repeated Hypothesis hypotheses = 1;
+  repeated Race races = 2;
+  repeated string lock_cycles = 3;
+}
