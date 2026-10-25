@@ -61,6 +61,12 @@ enum Cmd {
     Diff { a: PathBuf, b: PathBuf },
     /// Show compiled bytecode with instrumentation probes
     Disasm { file: PathBuf },
+    /// Measure record / replay / seek cost and recording size; prints markdown
+    Bench {
+        files: Vec<PathBuf>,
+        #[arg(long, default_value_t = 20)]
+        runs: u64,
+    },
     /// Start the HTTP API (+ UI) and the gRPC service
     Serve {
         #[arg(long, default_value_t = 7420)]
@@ -405,6 +411,7 @@ fn main() -> Result<()> {
                 s.instructions, s.access_probes, s.shared_probes, s.sync_probes, s.nondet_probes
             );
         }
+        Cmd::Bench { files, runs } => bench(&files, runs)?,
         Cmd::Serve {
             port,
             grpc_port,
@@ -440,6 +447,61 @@ fn main() -> Result<()> {
             tokio::runtime::Runtime::new()?.block_on(cf_server::serve(cfg))?;
         }
         Cmd::Native { cmd } => native(&p, cmd)?,
+    }
+    Ok(())
+}
+
+fn bench(files: &[PathBuf], runs: u64) -> Result<()> {
+    use std::time::Instant;
+    println!(
+        "| program | steps | record | instrumented replay | seek (avg) | recording | full trace |"
+    );
+    println!("|---|---:|---:|---:|---:|---:|---:|");
+    for file in files {
+        let program = compile(file)?;
+        let (mut rec_t, mut rep_t, mut seek_t, mut steps, mut small, mut full) =
+            (0.0, 0.0, 0.0, 0u64, 0usize, 0usize);
+        for seed in 0..runs {
+            let opts = RecordOptions {
+                name: stem(file),
+                seed,
+                ..Default::default()
+            };
+            let t = Instant::now();
+            let rec = cf_vm::record(program.clone(), &opts)?;
+            rec_t += t.elapsed().as_secs_f64();
+            let rec = Arc::new(rec);
+            let t = Instant::now();
+            let mut trace = Vec::new();
+            let tl = Timeline::build(
+                program.clone(),
+                rec.clone(),
+                cf_vm::DEFAULT_INTERVAL,
+                &mut trace,
+            )?;
+            rep_t += t.elapsed().as_secs_f64();
+            // seek to 16 positions spread over the run, in reverse order
+            let t = Instant::now();
+            for k in (0..16).rev() {
+                tl.seek(rec.total_steps * k / 16)?;
+            }
+            seek_t += t.elapsed().as_secs_f64() / 16.0;
+            steps += rec.total_steps;
+            small += format::encode_recording(&rec, None)?.len();
+            full += format::encode_recording(&rec, Some(&trace))?.len();
+        }
+        let n = runs as f64;
+        let rate = |secs: f64| format!("{:.1} M steps/s", steps as f64 / secs / 1e6);
+        println!(
+            "| `{}` | {} | {} | {} | {:.0} µs | {:.1} KB | {:.0} KB |",
+            file.file_name().unwrap().to_string_lossy(),
+            steps / runs,
+            rate(rec_t),
+            rate(rep_t),
+            seek_t / n * 1e6,
+            small as f64 / n / 1024.0,
+            full as f64 / n / 1024.0,
+        );
     }
     Ok(())
 }

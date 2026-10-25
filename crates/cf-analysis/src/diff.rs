@@ -105,7 +105,7 @@ fn data_divergence(
                 "T{} wrote {} at step {} (line {})",
                 w.tid, w.value, w.step, w.line
             ),
-            None => "never wrote it".into(),
+            None => format!("there is no write #{}", k + 1),
         };
         let explanation = format!(
             "Write #{} to `{name}` is where the data parts ways: in the passing run {}, in the failing run {}.",
