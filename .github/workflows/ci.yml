@@ -25,12 +25,15 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo test --workspace
-      - name: ptrace sanity
-        if: runner.os == 'Linux'
+      - name: test
+        shell: bash
         run: |
-          cat /proc/sys/kernel/yama/ptrace_scope || true
-          cargo test -p cf-ptrace -- --nocapture
+          set -o pipefail
+          cargo test --workspace 2>&1 | tee test.log
+      - name: surface test failures
+        if: failure()
+        shell: bash
+        run: bash .github/annotate.sh test.log
 
   rocksdb:
     runs-on: ubuntu-latest
@@ -39,7 +42,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: sudo apt-get update && sudo apt-get install -y clang libclang-dev
-      - run: cargo test -p cf-trace --features rocksdb
+      - name: test
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo test -p cf-trace --features rocksdb 2>&1 | tee test.log
+      - name: surface test failures
+        if: failure()
+        shell: bash
+        run: bash .github/annotate.sh test.log
 
   ui:
     runs-on: ubuntu-latest
