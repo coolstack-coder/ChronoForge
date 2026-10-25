@@ -1,0 +1,4 @@
+[package]
+name = "chronoforge"
+version.workspace = true
+edition.workspace = true

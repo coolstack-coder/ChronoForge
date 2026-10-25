@@ -44,7 +44,7 @@ impl Timeline {
 
         let step_limited = matches!(recording.outcome, cf_trace::Outcome::StepLimit { .. });
         while m.outcome.is_none() && m.step <= recording.total_steps {
-            if m.step % interval == 0 && checkpoints.len() as Step == m.step / interval {
+            if m.step.is_multiple_of(interval) && checkpoints.len() as Step == m.step / interval {
                 checkpoints.push(Checkpoint {
                     machine: m.clone(),
                     cursor: oracle.cursor,

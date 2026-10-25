@@ -1,0 +1,19 @@
+[package]
+name = "cf-ptrace"
+description = "Native record/replay of single-threaded Linux programs via ptrace"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+cf-trace.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc.workspace = true
+object.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+tempfile.workspace = true

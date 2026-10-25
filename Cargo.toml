@@ -16,7 +16,7 @@ edition = "2021"
 license = "MIT"
 authors = ["Anmol Advani"]
 repository = "https://github.com/coolstack-coder/ChronoForge"
-rust-version = "1.80"
+rust-version = "1.88"
 
 [workspace.dependencies]
 cf-trace = { path = "crates/cf-trace" }

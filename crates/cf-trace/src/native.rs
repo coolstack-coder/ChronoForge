@@ -77,6 +77,14 @@ pub struct NativeRecording {
     /// Data/BSS symbols from the ELF, so we can show "variables" by name.
     pub globals: Vec<NativeGlobal>,
     pub vdso_patched: Vec<String>,
+    /// The 16 random bytes the kernel hands every process (stack canary,
+    /// pointer guard). Written back at exec time on replay.
+    #[serde(default)]
+    pub at_random: Vec<u8>,
+    #[serde(default)]
+    pub env: Vec<String>,
+    #[serde(default)]
+    pub stdout: Vec<u8>,
     pub events: Vec<NativeEvent>,
     /// Snapshots of each global's bytes at every event, filled by replay.
     #[serde(default)]

@@ -60,9 +60,9 @@ impl Oracle for RecordOracle {
         let cur = m.current;
         let cur_ok = runnable.contains(&cur);
         let others: Vec<Tid> = runnable.iter().copied().filter(|t| *t != cur).collect();
-        let next = if !cur_ok {
-            others[self.rng.below(others.len() as u64) as usize]
-        } else if !others.is_empty() && (m.yielded || self.rng.chance(self.chaos)) {
+        // short-circuiting matters: the rng is only consulted when a switch is possible
+        let switch = !cur_ok || (!others.is_empty() && (m.yielded || self.rng.chance(self.chaos)));
+        let next = if switch {
             others[self.rng.below(others.len() as u64) as usize]
         } else {
             cur

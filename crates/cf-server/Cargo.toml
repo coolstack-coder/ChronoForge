@@ -1,0 +1,4 @@
+[package]
+name = "cf-server"
+version.workspace = true
+edition.workspace = true

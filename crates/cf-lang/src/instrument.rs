@@ -101,11 +101,10 @@ fn probe_for(ins: &Instr) -> Probe {
             ..
         } => Probe::ACCESS.with(Probe::SHARED),
         Instr::Spawn { .. } => Probe::SYNC.with(Probe::ACCESS),
-        Instr::Builtin { b, .. }
-            if matches!(b, Builtin::Lock | Builtin::Unlock | Builtin::Join) =>
-        {
-            Probe::SYNC
-        }
+        Instr::Builtin {
+            b: Builtin::Lock | Builtin::Unlock | Builtin::Join,
+            ..
+        } => Probe::SYNC,
         Instr::Builtin { b, .. } if b.is_nondeterministic() => Probe::NONDET,
         _ => Probe::NONE,
     }
