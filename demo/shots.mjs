@@ -1,0 +1,26 @@
+// Quick visual check: walk the main flow and drop screenshots.
+import { chromium } from "playwright";
+const out = process.argv[2] ?? ".";
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+p.on("console", (m) => m.type() === "error" && console.log("console:", m.text()));
+p.on("pageerror", (e) => console.log("pageerror:", e.message));
+await p.goto("http://127.0.0.1:7420/");
+await p.waitForTimeout(3200);
+await p.screenshot({ path: `${out}/1-landing.png` });
+await p.keyboard.press("Enter");
+await p.waitForTimeout(500);
+await p.getByText("start hunt").click();
+await p.waitForSelector(".cell.fail");
+await p.waitForTimeout(1500);
+await p.screenshot({ path: `${out}/2-hunt.png` });
+await p.locator(".cell.fail").first().click();
+await p.waitForSelector(".verdict h1");
+await p.waitForTimeout(1200);
+await p.screenshot({ path: `${out}/3-verdict.png` });
+await p.locator(".ev").first().click();
+await p.waitForTimeout(800);
+await p.getByText("balance", { exact: true }).first().click();
+await p.waitForTimeout(800);
+await p.screenshot({ path: `${out}/4-evidence.png` });
+await b.close();

@@ -1,0 +1,7 @@
+{
+  "name": "chronoforge-demo",
+  "private": true,
+  "type": "module",
+  "scripts": { "record": "node record.mjs" },
+  "devDependencies": { "playwright": "1.48.2" }
+}

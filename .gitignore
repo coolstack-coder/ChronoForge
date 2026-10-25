@@ -9,3 +9,5 @@ __pycache__/
 *.pyc
 .venv/
 ui/test-results/
+.claude/
+recordings/
