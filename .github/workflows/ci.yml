@@ -99,4 +99,9 @@ jobs:
           ./target/debug/chronoforge native show flaky.json
           ./target/debug/chronoforge native replay flaky.json
           ./target/debug/chronoforge native replay flaky.json --at "$(python3 -c 'import json;e=json.load(open("flaky.json"))["events"];print(next((i for i,x in enumerate(e) if "Signal" in x["kind"]), len(e)-2))')"
-      - run: bash .github/publish-sample.sh flaky.json
+      - run: bash .github/publish-sample.sh flaky.json 0
+      - run: bash .github/publish-sample.sh flaky.json 1
+      - run: bash .github/publish-sample.sh flaky.json 2
+      - run: bash .github/publish-sample.sh flaky.json 3
+      - run: bash .github/publish-sample.sh flaky.json 4
+      - run: bash .github/publish-sample.sh flaky.json 5
