@@ -11,7 +11,7 @@
 
 **Resume line:**
 
-> **ChronoForge | Deterministic Execution Replay & Time-Travel Debugging Platform** — Rust engine that records only nondeterminism (~1,700× smaller than a full trace) and replays bit-for-bit; checkpointed reverse execution with µs seeks; FastTrack-style race, Goodlock and wait-for deadlock detection; dynamic-slicing root-cause ranking; Linux ptrace backend (x86_64/arm64) with vDSO patching and syscall emulation; axum + tonic gRPC API; React/TypeScript timeline UI; Claude-based narration with citation grounding.
+> **ChronoForge | Deterministic Execution Replay & Time-Travel Debugging Platform** — Rust engine that records only nondeterminism (~1,700× smaller than a full trace) and replays bit-for-bit; checkpointed reverse execution with µs seeks; FastTrack-style race, Goodlock and wait-for deadlock detection; dynamic-slicing root-cause ranking; Linux ptrace backend (x86_64/arm64) with vDSO patching and syscall emulation; axum + tonic gRPC API; React/TypeScript timeline UI; LLM narration with citation grounding.
 
 ## Making the video play inline in the README
 

@@ -44,7 +44,7 @@ Some bugs only happen when threads interleave a particular way, when the clock l
 | 🧭 **Root cause with evidence** | Backward dynamic slicing over a recorded data-flow graph, lost-update detection and control-dependence tracking, ranked into a verdict that cites exact steps. |
 | ⇄ **Run diffing** | First schedule divergence and first *data* divergence between a passing and a failing run. |
 | 🐧 **Native Linux binaries** | A `ptrace` recorder/replayer for real ELF programs. It patches the vDSO, turns ASLR off, pins `AT_RANDOM`, emulates syscalls on replay, and seeks to the faulting instruction. |
-| ✦ **LLM write-ups, grounded** | An optional Claude narrator turns the evidence into an incident note. Any narrative that cites a step the engine never produced is rejected. |
+| ✦ **LLM write-ups, grounded** | An optional LLM narrator turns the evidence into an incident note. Any narrative that cites a step the engine never produced is rejected. |
 
 ---
 
@@ -251,7 +251,7 @@ crates/
   cf-server     axum JSON API for the UI + tonic gRPC service (proto/chronoforge.proto)
   chronoforge   the CLI
 ui/             React + TypeScript (Vite), canvas timeline, no UI framework
-analysis/       optional Python + Claude narrator with step-citation grounding
+analysis/       optional Python LLM narrator with step-citation grounding
 demo/           Playwright scripts that record the README video, screenshots and banner
 ```
 
@@ -263,7 +263,7 @@ demo/           Playwright scripts that record the README video, screenshots and
 | execution storage | `.cfrec` files by default; **RocksDB** backend behind `--features rocksdb` (big-endian step keys → range scans) |
 | backend | Rust, **axum** (REST) + **tonic** (gRPC; `protox` compiles the proto, no `protoc` needed) |
 | visualization | React 18 + TypeScript, `<canvas>` timeline |
-| AI analysis | Python, Anthropic SDK (`claude-opus-5-5`, structured output, grounding check) |
+| AI analysis | Python + LLM API (structured JSON output, step-citation grounding check) |
 
 **gRPC**: `Record`, `Hunt` (server-streaming), `Seek`, `StreamSteps` (server-streaming) and `Analyze`. See [`proto/chronoforge.proto`](proto/chronoforge.proto). A test spins up the server and drives every RPC through the generated client.
 
@@ -272,7 +272,7 @@ demo/           Playwright scripts that record the README video, screenshots and
 ### Optional: LLM incident notes
 ```bash
 pip install -e analysis && export ANTHROPIC_API_KEY=…
-chronoforge serve     # "✦ write it up" in the verdict panel now asks Claude
+chronoforge serve     # "✦ write it up" in the verdict panel now asks the LLM
 ```
 The model gets the program, the failure, the hypotheses, races and slice. It must cite step numbers, and `chronoforge_ai` checks every cited step (in the list *and* in the prose) against the evidence. Without a key you get the same write-up generated deterministically.
 
